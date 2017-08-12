@@ -5,7 +5,7 @@ from collections import defaultdict
 import os
 
 
-async def ConcurrentHttpDownloader(url, timeout=600):
+async def ConcurrentHttpDownloader(url, timeout=10):
     async with aiohttp.ClientSession() as session:
         with async_timeout.timeout(timeout):
             async with session.get(url) as response:
