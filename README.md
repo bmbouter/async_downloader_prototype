@@ -20,5 +20,5 @@ are completed.
 * all urls are downloaded in parallel
 * the content units are emitted only when all downloads are completed
 * additional content units can be registered after downloading has begun
-* deduplicates urls needed by more than one content unit
-* allows the plugin writer to own the asyncio event loop
+* de-duplicates urls needed by more than one content unit
+* emits content units via simple looping

@@ -28,6 +28,7 @@ class DownloadAll(object):
         self.downloads_not_done = []
         self.content_units_not_done = []
         self.urls = defaultdict(list) # dict of lists keyed on urls which point to a list of ContentUnitDownloader objects
+        self.loop = asyncio.get_event_loop()
 
     def register_for_downloading(self, content_unit):
         self.content_units_not_done.append(content_unit)
@@ -38,18 +39,31 @@ class DownloadAll(object):
                 self.downloads_not_done.append(downloader_for_url)
             self.urls[url].append(content_unit)
 
-    async def __call__(self):
-            while self.downloads_not_done:
-                done_this_time, self.downloads_not_done = await asyncio.wait(self.downloads_not_done, return_when=asyncio.FIRST_COMPLETED)
-                for task in done_this_time:
-                    # TODO check for errors here in task.exception() or similar
-                    url, filename = task.result()
-                    for content_unit in self.urls[url]:
-                        content_unit.finished_urls.append(url)
-                for index, content_unit in enumerate(self.content_units_not_done):
-                    if content_unit.done:
-                        self.content_units_not_done.pop(index)
-                        return content_unit
+    def _find_and_remove_done_content_unit(self):
+        for index, content_unit in enumerate(self.content_units_not_done):
+            if content_unit.done:
+                self.content_units_not_done.pop(index)
+                return content_unit
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while self.downloads_not_done:
+            done_this_time, self.downloads_not_done = self.loop.run_until_complete(asyncio.wait(self.downloads_not_done, return_when=asyncio.FIRST_COMPLETED))
+            for task in done_this_time:
+                # TODO check for errors here in task.exception() or similar
+                url, filename = task.result()
+                for content_unit in self.urls[url]:
+                    content_unit.finished_urls.append(url)
+                content_unit = self._find_and_remove_done_content_unit()
+                if content_unit:
+                    return content_unit
+        content_unit = self._find_and_remove_done_content_unit()
+        if content_unit:
+            return content_unit
+        else:
+            raise StopIteration()
 
 
 class ContentUnitDownloader(object):
@@ -83,13 +97,7 @@ def plugin_writers_code():
     download_all.register_for_downloading(downloader_a)
     download_all.register_for_downloading(downloader_b)
 
-    loop = asyncio.get_event_loop()
-    content_unit = True
-
-    c = []
-    while content_unit:
-        content_unit = loop.run_until_complete(download_all())
-        c.append(content_unit)
+    for content_unit in download_all:
         print('content_unit = {0}'.format(content_unit))
 
 
