@@ -19,6 +19,7 @@ are completed.
 #### Features:
 * all urls are downloaded in parallel
 * the content units are emitted only when all downloads are completed
-* additional content units can be registered after downloading has begun
-* de-duplicates urls needed by more than one content unit
-* emits content units via simple looping
+* content units are emitted via looping
+* additional content units can be registered for downloading after downloading has begun
+* urls are de-duplicated, so even if urls belong to multiple content units, files are only downloaded once
+* correctly handles cases where a file is needed by multiple content units
