@@ -16,7 +16,6 @@ async def ConcurrentHttpDownloader(url, timeout=10):
                             print('Finished downloading {filename}'.format(filename=filename))
                             break
                         f_handle.write(chunk)
-                        await asyncio.sleep(1)
                         # push each chunk through the digest and size validators
             await response.release()
             return filename  # TODO have this return the digest and size validators
